@@ -3,6 +3,8 @@
   <img src="logo.jpg" width="400" />
 </div>
 
+> Theme-only extract of the WordPress theme formerly shipped inside the `troyweb_wp` full-site assessment repo. Folder name on disk can be anything; Theme Name in `style.css` is **Monotone Flex Theme**.
+
 Monotone is a flexible, modular WordPress theme that leverages the power of Advanced Custom Fields (ACF) for layout configuration. It uses a modern Vite asset build process for SCSS, Bootstrap and JavaScript, and all fonts are served directly from the theme, ensuring a consistent and fast user experience.
 
 ## Features
