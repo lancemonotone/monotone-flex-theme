@@ -1,0 +1,12 @@
+// Import Bootstrap's functions and variables
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+// Override the $spacers map
+$custom-spacers: (
+        "short": 1.8rem,
+        "standard": 5rem,
+        "tall": 8rem
+);
+
+$spacers: map-merge($spacers, $custom-spacers);

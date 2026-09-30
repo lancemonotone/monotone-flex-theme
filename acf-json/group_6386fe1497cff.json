@@ -1,0 +1,178 @@
+{
+    "key": "group_6386fe1497cff",
+    "title": "Flex Layouts",
+    "fields": [
+        {
+            "key": "field_6386fe144d772",
+            "label": "Flex Modules",
+            "name": "template_flex_page",
+            "aria-label": "",
+            "type": "flexible_content",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layouts": {
+                "layout_668da23afd65d": {
+                    "key": "layout_668da23afd65d",
+                    "name": "full_width_section",
+                    "label": "Full Width Section",
+                    "display": "block",
+                    "sub_fields": [
+                        {
+                            "key": "field_668da247fd65f",
+                            "label": "Section Heading",
+                            "name": "section_heading",
+                            "aria-label": "",
+                            "type": "text",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "default_value": "",
+                            "maxlength": "",
+                            "placeholder": "",
+                            "prepend": "",
+                            "append": ""
+                        },
+                        {
+                            "key": "field_668da250fd660",
+                            "label": "Heading Size",
+                            "name": "heading_size",
+                            "aria-label": "",
+                            "type": "button_group",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
+                                "fs-1": "Largest",
+                                "fs-2": "Larger",
+                                "fs-3": "Large",
+                                "fs-4": "Medium",
+                                "fs-5": "Small",
+                                "fs-6": "Smallest"
+                            },
+                            "default_value": "fs-2",
+                            "return_format": "value",
+                            "allow_null": 0,
+                            "layout": "horizontal"
+                        },
+                        {
+                            "key": "field_668da269fd661",
+                            "label": "Content",
+                            "name": "content",
+                            "aria-label": "",
+                            "type": "wysiwyg",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "default_value": "",
+                            "tabs": "all",
+                            "toolbar": "full",
+                            "media_upload": 1,
+                            "delay": 0
+                        }
+                    ],
+                    "min": "",
+                    "max": ""
+                },
+                "layout_64badcc6dafd2": {
+                    "key": "layout_64badcc6dafd2",
+                    "name": "divider",
+                    "label": "Divider",
+                    "display": "block",
+                    "sub_fields": [
+                        {
+                            "key": "field_64badcc6dafd3",
+                            "label": "Divider Height",
+                            "name": "divider_height",
+                            "aria-label": "",
+                            "type": "button_group",
+                            "instructions": "The best way to space out modules on a page is to use this module or a spacer module.",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
+                                "mb-short": "Short",
+                                "mb-standard": "Standard",
+                                "mb-tall": "Tall"
+                            },
+                            "default_value": "mb-standard",
+                            "return_format": "value",
+                            "allow_null": 0,
+                            "layout": "horizontal"
+                        },
+                        {
+                            "key": "field_64badcf4dafd4",
+                            "label": "Divider Label",
+                            "name": "divider_label",
+                            "aria-label": "",
+                            "type": "text",
+                            "instructions": "When populated, this optional field shows a single line of text aligned to the bottom right of the example line.",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "default_value": "",
+                            "maxlength": "",
+                            "placeholder": "",
+                            "prepend": "",
+                            "append": ""
+                        }
+                    ],
+                    "min": "",
+                    "max": ""
+                }
+            },
+            "min": "",
+            "max": "",
+            "button_label": "Add Layout"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "page_template",
+                "operator": "==",
+                "value": "template-flex-page.php"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "the_content"
+    ],
+    "active": true,
+    "description": "",
+    "show_in_rest": 0,
+    "modified": 1720638685
+}

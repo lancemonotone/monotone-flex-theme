@@ -1,0 +1,290 @@
+@import "fonts";
+
+@mixin font-normalize {
+    text-rendering: optimizelegibility;
+    font-weight: normal;
+    line-height: 170%;
+    text-wrap: pretty;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: auto;
+}
+
+:root {
+    --font-sans: "Barlow", sans-serif;
+    --font-serif: "Roboto", serif;
+    --hover-color: var(--primary-light);
+}
+
+body {
+    font-family: var(--font-sans);
+    @include font-normalize;
+}
+
+/**
+* Add a top margin to all elements in the container
+* except the first one.
+*/
+main .container :is(div, pre, h1, h2, h3, h4, h5, h6, p, section, article, header, footer, nav, main) + :is(div, pre, h1, h2, h3, h4, h5, h6, p, section, article, header, footer, nav, main) {
+    margin-block-start: 1.5rem;
+}
+
+.d-grid,
+.d-flex {
+    * + * {
+        margin-block-start: 0 !important;
+    }
+}
+
+p {
+    margin-block: 0;
+
+    &:empty {
+        display: none;
+    }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-serif);
+    font-weight: bold;
+    line-height: 120%;
+}
+
+h1 {
+    margin-block-end: calc(3 * $spacer);
+}
+
+blockquote {
+    border-left: 4px solid var(--bs-gray-400);
+    padding: calc(0.5 * $spacer) calc(1 * $spacer);
+    margin: calc(1 * $spacer) 0;
+    color: var(--bs-gray-600);
+    font-style: italic;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: var(--bs-gray-200);
+    }
+
+    tr:nth-child(odd) {
+        background-color: var(--bs-gray-100);
+    }
+
+    thead th {
+        background-color: var(--bs-dark);
+        color: var(--bs-light);
+    }
+
+    tfoot {
+        background-color: var(--bs-light);
+        color: var(--bs-dark);
+    }
+}
+
+dl {
+    margin: 1rem 0;
+    padding: 0;
+
+    dt {
+        font-weight: bold;
+        color: var(--bs-dark);
+    }
+
+    dd {
+        margin-left: 1rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+a {
+    text-decoration: none;
+}
+
+address {
+    font-style: normal;
+    line-height: 1.4;
+}
+
+abbr, acronym {
+    border-bottom: 1px dotted var(--bs-dark);
+    cursor: help;
+}
+
+area {
+    outline: none;
+}
+
+article, aside, section, header, footer, nav, main {
+    display: block;
+}
+
+b, strong {
+    font-weight: bold;
+}
+
+big {
+    font-size: larger;
+}
+
+br {
+    clear: both;
+}
+
+caption {
+    text-align: left;
+    font-weight: bold;
+    padding: 0.5rem;
+}
+
+cite {
+    font-style: italic;
+}
+
+code, kbd, tt, var, samp {
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+col {
+    display: table-column;
+}
+
+del {
+    text-decoration: line-through;
+}
+
+details {
+    display: block;
+}
+
+div {
+    display: block;
+}
+
+em {
+    font-style: italic;
+}
+
+figure {
+    margin: 1rem 0;
+}
+
+figcaption {
+    font-size: 0.9em;
+    text-align: center;
+}
+
+font {
+    font-family: inherit;
+}
+
+hgroup {
+    display: block;
+}
+
+i {
+    font-style: italic;
+}
+
+ins {
+    text-decoration: underline;
+}
+
+map {
+    display: inline;
+}
+
+mark {
+    background-color: var(--bs-warning);
+    color: var(--bs-dark);
+}
+
+pre {
+    display: block;
+    padding: 0.9rem;
+    background-color: var(--bs-light);
+    border-radius: 0.3rem;
+    font-size: 0.85em;
+    overflow: auto;
+}
+
+q {
+    quotes: "“" "”" "‘" "’";
+}
+
+q:before {
+    content: open-quote;
+}
+
+q:after {
+    content: close-quote;
+}
+
+rp, rt {
+    display: none;
+}
+
+ruby {
+    display: inline-block;
+}
+
+s, strike {
+    text-decoration: line-through;
+}
+
+small {
+    font-size: 80%;
+}
+
+span {
+    display: inline;
+}
+
+sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+sup {
+    top: -0.5em;
+}
+
+tt {
+    font-family: monospace;
+    background-color: var(--bs-gray-200);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.2rem;
+}
+
+u {
+    text-decoration: underline;
+    text-decoration-color: var(--bs-primary);
+}
+
+var {
+    font-style: italic;
+    color: var(--bs-info);
+}

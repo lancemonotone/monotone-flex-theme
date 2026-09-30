@@ -1,0 +1,101 @@
+.click-to-copy-wrapper,
+.click-to-copy {
+    p:empty {
+        display: none;
+    }
+
+    --outline-offset: -1.5rem;
+    --border-color: transparent;
+    --icon-color: var(--text);
+
+    &:hover {
+        --border-color: var(--accent);
+        --icon-color: var(--accent);
+    }
+
+    // Pseudo-elements for top/bottom and left/right borders
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        pointer-events: none; // Ensure clicks go through the pseudo-elements
+        border-style: dashed;
+        border-color: var(--border-color);
+        z-index: -1; // Place the outlines behind the content
+    }
+
+    &::before {
+        top: 0;
+        bottom: 0;
+        left: var(--outline-offset);
+        right: var(--outline-offset);
+        border-width: 0.1rem 0; // Only top and bottom borders
+    }
+
+    &::after {
+        top: 0;
+        bottom: 0;
+        left: var(--outline-offset); // Offset for left border
+        right: var(--outline-offset); // Offset for right border
+        border-width: 0 0.1rem; // Only left and right borders
+    }
+
+    // Base styles for buttons
+    %click-to-copy-button-base {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+
+        .dashicons {
+            font-size: 2rem;
+            color: var(--icon-color);
+        }
+
+        .click-to-copy-text {
+            position: absolute;
+            inset-block-end: 100%; // Position it above the button
+            inset-inline-start: 50%; // Start from the middle of the button
+            transform: translateX(-50%); // Center align above the button
+            visibility: hidden;
+            opacity: 0;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.75);
+            color: var(--white);
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.4rem;
+            font-size: 1.4rem;
+            transition: visibility 0s, opacity 0.3s ease;
+        }
+
+        &:hover .click-to-copy-text {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+    }
+
+    // Apply the base styles to both buttons
+    .click-to-copy-button,
+    .click-to-copy-html-button {
+        @extend %click-to-copy-button-base;
+    }
+
+    .click-to-copy-buttons {
+        display: grid;
+        gap: 1rem; // Gap between buttons
+        align-content: start; // Align buttons to the top
+        margin-inline-end: -1rem; // Remove the gap on the right side
+    }
+
+    // The rest of your container styles...
+    display: grid;
+    grid-template-columns: 1fr auto; // content takes remaining space, buttons take auto width
+    gap: 1rem; // Gap between content and button container
+    position: relative;
+    padding-block-start: 1rem;
+    margin-block-end: var(--spacer-short);
+}

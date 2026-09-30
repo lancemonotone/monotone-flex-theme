@@ -1,0 +1,95 @@
+/******************************************************************
+Site Name:
+Author:
+
+Stylesheet: Admin Stylesheet
+
+If you like living on the edge, you can add some styles here to
+customize the dashboard and WordPress admin area. This stylesheet
+is empty, but you can just start dropping your styles here to
+start customizing. All admin functions are located in admin.php.
+
+******************************************************************/
+.mce-menu-item.mce-menu-item-preview.mce-active .mce-text,
+.mce-menu-item.mce-menu-item-preview.mce-active .mce-icon {
+    color: #ffffff !important;
+}
+
+.acf-fc-layout-handle {
+    display: grid !important;
+    grid-template-columns: 30px 100px 1fr 2fr 0.5fr;
+    align-items: center;
+    gap: 0.5rem;
+    grid-template-areas: "order thumbnail type title actions"; /* Define grid areas */
+}
+
+.acf-fc-layout-handle .acf-fc-layout-order {
+    grid-area: order; /* Assign grid area */
+}
+
+/* When there is no thumbnail, title takes over the thumbnail and type areas */
+.acf-fc-layout-handle .no-thumbnail + .acf-layout-type {
+    grid-area: thumbnail; /* This will effectively hide the type label */
+    grid-column: span 2; /* This will make the title span the thumbnail and type areas */
+}
+
+.acf-fc-layout-handle .thumbnail:not(.no-thumbnail) {
+    grid-area: thumbnail; /* Assign grid area */
+    display: flex;
+    justify-content: center; /* Center thumbnail if it exists */
+    align-items: center;
+
+    img {
+        object-fit: contain;
+        max-width: 100%;
+    }
+}
+
+.acf-fc-layout-handle .acf-layout-type {
+    grid-area: type; /* Assign grid area */
+    font-size: .8rem;
+    font-weight: 500;
+    font-style: italic;
+    color: #fff !important;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgb(0 0 0 / 7%);
+}
+
+.acf-fc-layout-handle .acf-layout-title {
+    grid-area: title; /* Assign grid area */
+    font-size: .8rem;
+    font-weight: 500;
+    background: #fff;
+    color: #1d2327 !important;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgb(0 0 0 / 7%);
+}
+
+.acf-icon.-clear {
+    background: #f5f5f5 !important;
+}
+
+/* Placeholder for actions area if you have action buttons or icons */
+.acf-fc-layout-handle .actions {
+    grid-area: actions; /* Assign grid area for future use if there are action buttons or icons */
+}
+
+.post-type-acf-field-group #acf-field-group-fields .acf-field-object-tab,
+.post-type-acf-field-group #acf-field-group-fields .acf-field-object-accordion {
+    //background-color: #d3d3d3 !important;
+    background-color: #e7eff9 !important;
+}
+
+.wp-list-table {
+    tr.level-0 {
+        background-color: #f1f5ff !important;
+
+        td, th {
+            border-block-end: 1px solid #fff;
+        }
+    }
+}

@@ -1,0 +1,14 @@
+:root {
+    --bs-primary: #e87739;
+    --bs-primary-rgb: 232, 119, 57;
+    --bs-primary-dark: #d96e33;
+    --bs-primary-dark-rgb: 217, 110, 51;
+    --bs-primary-light: #f2a16c;
+    --bs-primary-light-rgb: 242, 161, 108;
+    --bs-body-color: #474751;
+    --bs-body-color-rgb: 71, 71, 81;
+    --bs-link-color: var(--bs-primary);
+    --bs-link-color-rgb: var(--bs-primary-rgb);
+    --bs-link-hover-color: var(--bs-primary-dark);
+    --bs-link-hover-color-rgb: var(--bs-primary-dark-rgb);
+}

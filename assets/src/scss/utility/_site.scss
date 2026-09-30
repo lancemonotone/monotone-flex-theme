@@ -1,0 +1,31 @@
+.site {
+    opacity: 0;
+    animation-name: fade-in;
+    animation-duration: .1s;
+    animation-delay: .1s;
+    animation-timing-function: cubic-bezier(1, -.02, 1, 1);
+    animation-fill-mode: forwards;
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/**
+ * Sticky footer
+ * Check for existence of header, main, and footer elements.
+ * Not foolproof, but good enough as long as you ensure those
+ * are the only direct children of the site element.
+ */
+.site:has(>header):has(>main):has(>footer) {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    // prevents horizontal scrolling
+    grid-template-columns: minmax(0, 1fr);
+}

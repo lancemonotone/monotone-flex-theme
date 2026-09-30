@@ -1,0 +1,19 @@
+.expando {
+    &.card-body {
+        height: auto;
+    }
+
+    .visible-content,
+    .hidden-content {
+        display: inline; /* Keeps text inline */
+    }
+
+    .toggle-link {
+        display: inline-block;
+        cursor: pointer; /* Gives the link a pointer cursor */
+        &:hover {
+            text-decoration: underline; /* Makes it look more like a link */
+        }
+    }
+
+}

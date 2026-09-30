@@ -1,0 +1,15 @@
+// Remove margin top to fix sticky
+// footer when admin bar is present.
+body.admin-bar .site {
+    @media screen {
+        & {
+            min-height: calc(100vh - 32px);
+        }
+    }
+    @media screen and (max-width: 782px) {
+        & {
+            min-height: calc(100vh - 46px);
+        }
+    }
+
+}

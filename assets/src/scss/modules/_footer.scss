@@ -1,0 +1,86 @@
+.site > footer {
+    .widget-area {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: map-get($spacers, short);
+
+        .widget:last-child {
+            justify-self: center;
+        }
+
+        @media (min-width: map-get($grid-breakpoints, sm)) {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto;
+            justify-content: space-between;
+            .widget:first-child,
+            .widget:last-child {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (min-width: map-get($grid-breakpoints, md)) {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto auto;
+            .widget:last-child {
+                grid-column: unset;
+
+            }
+        }
+
+        @media (min-width: map-get($grid-breakpoints, lg)) {
+            grid-template-columns: 2fr repeat(3, 1fr);
+            grid-template-rows: auto;
+            justify-items: end;
+            .widget:first-child{
+                grid-column: unset;
+            }
+            .widget:last-child {
+                justify-self: unset;
+            }
+            gap: map-get($spacers, standard);
+        }
+    }
+
+    .widget_nav_menu {
+        .widget-title {
+            @extend .visually-hidden;
+        }
+    }
+
+    .menu-social-media-container .menu {
+        @extend .d-flex;
+        @extend .gap-3;
+    }
+
+    .menu {
+        @extend .list-unstyled;
+        @extend .text-start;
+        @extend .p-0;
+    }
+
+    .menu .menu-item {
+        @extend .d-block;
+        @extend .mb-0;
+    }
+
+    .menu .menu-item a {
+        @extend .text-decoration-none;
+        @extend .d-block;
+        @extend .pb-3;
+        @extend .px-0;
+        color: var(--bs-secondary-bg);
+
+        &:hover {
+            color: var(--bs-body-bg);
+        }
+    }
+
+    .menu .sub-menu {
+        @extend .ms-3;
+        @extend .p-0;
+    }
+
+    .menu .sub-menu .menu-item {
+        @extend .d-block;
+    }
+}

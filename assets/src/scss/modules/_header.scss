@@ -1,0 +1,43 @@
+.navbar {
+    --bs-navbar-toggler-focus-width: 0.05rem;
+    --bs-nav-link-padding-x: 0;
+    --bs-nav-link-padding-y: .5rem;
+    --bs-nav-link-font-weight: ;
+    --bs-nav-link-color: var(--bs-body-color);
+    --bs-nav-link-hover-color: var(--bs-navbar-hover-color);
+    --bs-nav-link-disabled-color: var(--bs-navbar-disabled-color);
+    --bs-navbar-active-color: var(--bs-primary);
+    line-height: 1.4;
+
+    .current-menu-item {
+        & > a {
+            color: var(--bs-primary);
+            pointer-events: none;
+        }
+    }
+    .current-menu-ancestor {
+        & > a {
+            color: var(--bs-primary);
+        }
+    }
+}
+
+.dropdown-menu {
+    --bs-dropdown-border-radius: 0;
+    --bs-dropdown-padding-y: 0;
+    --bs-dropdown-item-padding-y: .5rem;
+    --bs-dropdown-link-active-color: var(--bs-primary);
+    --bs-dropdown-link-active-bg: var(--bs-body-bg);
+
+    border: none;
+
+    @media screen and (min-width: map-get($grid-breakpoints, lg)) {
+        &.show {
+            border-block-end: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
+        }
+
+        &[data-bs-popper] {
+            margin-top: 1.48rem;
+        }
+    }
+}
