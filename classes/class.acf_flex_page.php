@@ -68,11 +68,12 @@ namespace monotone;
  *     `assets/src/components/admin/acf-flex-layouts.js`
  *     `assets/src/components/admin/_acf-flex-layouts.scss`
  *
- * Collapse all:
- *     Adds a 'Collapse All' control on flexible content labels/actions
- *     so editors can collapse every layout row at once. ACF now provides
- *     this functionality natively. I like to think I was the inspiration :P
- * 
+ * Collapse / expand all (deprecated):
+ *     Injects a 'Collapse All' control in `acf-flex-layouts.js`. ACF Pro now ships 
+ *     native Expand All / Collapse All for flexible content fields. I like to think 
+ *     I was the inspiration :P I left the helper in place for reference but I
+ *     don't invoke it.
+ *
  * Layout Title Colors:
  *     Adds a colored background to the layout title in the admin editor, based 
  *     on the layout type name. Colors are the same for each layout type, so 
@@ -289,11 +290,11 @@ class ACF_Flex_Page {
      * @param string $title  Layout type label from ACF (e.g. 'Full Width Section').
      * @param array  $field  The ACF field definition (unused)
      * @param array  $layout Layout definition, including sub_fields.
-     * @param int    $i      The index of the layout in the flexible content field (unused).
+     * @param int|string $i Layout index, or 'acfcloneindex' for ACF clone templates (unused).
      *
      * @return string HTML for the flex row title in wp-admin.
      */
-    public function add_layout_title(string $title, array $field, array $layout, int $i): string {
+    public function add_layout_title(string $title, array $field, array $layout, int|string $i): string {
         // Apply any shortcodes to the $title string.
         $title = do_shortcode($title);
 

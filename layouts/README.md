@@ -29,6 +29,12 @@ Each layout consists of
 - An optional preview thumbnail named `thumb.png`, `thumb.jpg`, or `thumb.webp` in the layout folder.
   - Shown on the layout row handle in the editor and as a hover preview in the ACF "Add layout" popup.
 
+## Admin editor UX
+
+Theme helpers live in `assets/src/components/admin/acf-flex-layouts.js` and `_acf-flex-layouts.scss` (layout title colors, Add-layout hover thumbs).
+
+**Collapse / expand all (deprecated):** The theme used to inject its own Collapse All button (`initCollapseAll`, `[data-collapse="all"]`). ACF Pro now includes Expand All / Collapse All (`.acf-fc-expand-all` / `.acf-fc-collapse-all`). Use ACF's controls. Theme code remains in those files for reference but is no longer called.
+
 ## Step 1: Create Your Layout Module Markup
 
 1. **Create a New Directory**: Inside the `layouts` directory, create a new directory named after your layout. Use snake_case names (e.g., `my_layout`).

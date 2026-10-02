@@ -1,96 +1,118 @@
 /******************************************************************
-ACF Flexible Content admin UX (handles, collapse-all, choice thumbs)
+ACF Flexible Content admin UX (handles, choice thumbs)
 Paired with acf-flex-layouts.js
+ACF 6.5+: title HTML lives inside .acf-fc-layout-title; popup links use overflow:hidden.
+
+@deprecated Theme Collapse All — ACF Pro now has Expand All / Collapse All
+(.acf-fc-expand-all / .acf-fc-collapse-all). Styles for [data-collapse="all"]
+kept below; JS no longer injects that control.
 ******************************************************************/
 
 .acf-fc-layout-handle {
-    display: grid !important;
-    grid-template-columns: 30px 100px 1fr 2fr 0.5fr;
-    align-items: center;
-    gap: 0.5rem;
-    grid-template-areas: "order thumbnail type title actions"; /* Define grid areas */
-}
+	--thumb-inline-size: 100px;
+	--chip-pad-block: 0.5rem;
+	--chip-pad-inline: 1rem;
+	--chip-radius: 2px;
+	--chip-shadow: 0 0 10px rgb(0 0 0 / 7%);
 
-.acf-fc-layout-handle .acf-fc-layout-order {
-    grid-area: order; /* Assign grid area */
-}
+	/* Keep ACF 6.5 flex handle; style our injected chips inside title. */
+	& .acf-fc-layout-title {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1;
+		min-inline-size: 0;
+	}
 
-/* When there is no thumbnail, title takes over the thumbnail and type areas */
-.acf-fc-layout-handle .no-thumbnail + .acf-layout-type {
-    grid-area: thumbnail; /* This will effectively hide the type label */
-    grid-column: span 2; /* This will make the title span the thumbnail and type areas */
-}
+	& .thumbnail.no-thumbnail {
+		display: none;
+	}
 
-.acf-fc-layout-handle .thumbnail:not(.no-thumbnail) {
-    grid-area: thumbnail; /* Assign grid area */
-    display: flex;
-    justify-content: center; /* Center thumbnail if it exists */
-    align-items: center;
+	& .thumbnail:not(.no-thumbnail) {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		inline-size: var(--thumb-inline-size);
+		flex-shrink: 0;
 
-    img {
-        object-fit: contain;
-        max-width: 100%;
-    }
-}
+		& img {
+			object-fit: contain;
+			max-inline-size: 100%;
+			block-size: 36px;
+			inline-size: auto;
+		}
+	}
 
-.acf-fc-layout-handle .acf-layout-type {
-    grid-area: type; /* Assign grid area */
-    font-size: .8rem;
-    font-weight: 500;
-    font-style: italic;
-    color: #fff !important;
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgb(0 0 0 / 7%);
-}
+	& .acf-layout-type {
+		font-size: 0.8rem;
+		font-weight: 500;
+		font-style: italic;
+		color: #fff !important;
+		display: inline-block;
+		padding-block: var(--chip-pad-block);
+		padding-inline: var(--chip-pad-inline);
+		border-radius: var(--chip-radius);
+		box-shadow: var(--chip-shadow);
+	}
 
-.acf-fc-layout-handle .acf-layout-title {
-    grid-area: title; /* Assign grid area */
-    font-size: .8rem;
-    font-weight: 500;
-    background: #fff;
-    color: #1d2327 !important;
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgb(0 0 0 / 7%);
+	/* Our label chip (not ACF's .acf-fc-layout-title wrapper). */
+	& .acf-layout-title {
+		font-size: 0.8rem;
+		font-weight: 500;
+		background: #fff;
+		color: #1d2327 !important;
+		display: inline-block;
+		padding-block: var(--chip-pad-block);
+		padding-inline: var(--chip-pad-inline);
+		border-radius: var(--chip-radius);
+		box-shadow: var(--chip-shadow);
+	}
 }
 
 .acf-icon.-clear {
-    background: #f5f5f5 !important;
+	background: #f5f5f5 !important;
 }
 
-/* Placeholder for actions area if you have action buttons or icons */
-.acf-fc-layout-handle .actions {
-    grid-area: actions; /* Assign grid area for future use if there are action buttons or icons */
+/* @deprecated Paired with initCollapseAll(); unused while that helper stays uncalled. */
+.acf-label:has([data-collapse='all']) {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
-.acf-label:has([data-collapse="all"]) {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+/*
+ * Add-layout choice thumbs: hover preview to the left of each option.
+ * ACF 6.5 sets overflow:hidden on .acf-fc-popup a — that clips right:100% images.
+ */
+.acf-tooltip.acf-fc-popup {
+	& li {
+		overflow: visible;
+	}
 
-.acf-tooltip.acf-fc-popup li a {
-    position: relative;
-}
+	& li a {
+		position: relative;
+		overflow: visible;
+	}
 
-.acf-tooltip.acf-fc-popup li a img {
-    position: absolute;
-    top: 0;
-    right: 100%;
-    transform: translateX(-1rem);
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    width: auto;
-    max-width: 320px;
-    padding: 0.5rem;
-    background: #d5d5d5;
-    box-shadow: 0 0 2px #00000088;
-    border-radius: 1%;
-}
+	& li a img {
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-end: 100%;
+		transform: translateX(-1rem);
+		opacity: 0;
+		transition: opacity 0.2s ease-in-out;
+		inline-size: auto;
+		max-inline-size: min(320px, 40vw);
+		padding: 0.5rem;
+		background: #d5d5d5;
+		box-shadow: 0 0 2px #00000088;
+		border-radius: 1%;
+		pointer-events: none;
+		z-index: 1;
+	}
 
-.acf-tooltip.acf-fc-popup li a:hover img {
-    opacity: 1;
+	& li a:hover img {
+		opacity: 1;
+	}
 }
