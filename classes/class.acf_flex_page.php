@@ -21,12 +21,13 @@ namespace monotone;
  *     I have since developed a standalone plugin for defining and managing
  *     multiple ACF Block modules within a shared architecture, featuring
  *     automatic block and field registration, asset handling, and editor
- *     templates per block. It's similar in concept to this Flex Page
+ *     templates per block. It's the spiritual successor to this Flex Page
  *     builder, but instead of embedding Flex Content field definitions
  *     directly into the theme, defined ACF Block modules can be reused
  *     across any site with a block-enabled theme. ACF Blocks are authored in
  *     a more familiar way than native WP Blocks, are more performant than
  *     Flexible Content fields, and don't require anything special from themes.
+ *     That said, take a trip back in time with me...
  *
  * Layouts:
  *     Each Flex Page layout module is a self-contained directory in
