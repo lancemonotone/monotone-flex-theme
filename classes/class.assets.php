@@ -1,19 +1,21 @@
-<?php namespace monotone;
+<?php
+
+namespace monotone;
 
 class Assets {
     public function __construct() {
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
-        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ], 10 );
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts'], 10);
 
         // dequeue WP Block Library CSS
-        remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
-        remove_action( 'wp_footer', 'wp_enqueue_global_styles', 1 );
-        add_action( 'wp_enqueue_scripts', [$this, 'remove_wp_block_library_css'], 100 );
+        remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
+        remove_action('wp_footer', 'wp_enqueue_global_styles', 1);
+        add_action('wp_enqueue_scripts', [$this, 'remove_wp_block_library_css'], 100);
     }
 
     public function remove_wp_block_library_css() {
-        wp_dequeue_style( 'wp-block-library' );
-        wp_dequeue_style( 'wp-block-library-theme' );
+        wp_dequeue_style('wp-block-library');
+        wp_dequeue_style('wp-block-library-theme');
     }
 
     /**
@@ -24,11 +26,11 @@ class Assets {
         $css = '/css/index.css';
         $js  = '/js/index.js';
 
-        $css_version = filemtime( THEME_BUILD_PATH . $css );
-        $js_version  = filemtime( THEME_BUILD_PATH . $js );
+        $css_version = filemtime(THEME_BUILD_PATH . $css);
+        $js_version  = filemtime(THEME_BUILD_PATH . $js);
 
-        wp_enqueue_style( 'monotone', THEME_BUILD_URI . $css, [], $css_version );
-        wp_enqueue_script( 'monotone', THEME_BUILD_URI . $js, [ 'jquery' ], $js_version, true );
+        wp_enqueue_style('monotone', THEME_BUILD_URI . $css, [], $css_version);
+        wp_enqueue_script('monotone', THEME_BUILD_URI . $js, ['jquery'], $js_version, true);
     }
 
     /**
@@ -40,13 +42,23 @@ class Assets {
         $admin_js  = '/js/admin.js';   // Admin-specific JS file
 
         // Use THEME_ADMIN_BUILD_PATH and THEME_ADMIN_BUILD_URI for admin assets
-        $admin_css_version = filemtime( THEME_ADMIN_BUILD_PATH . $admin_css );
-        $admin_js_version  = filemtime( THEME_ADMIN_BUILD_PATH . $admin_js );
+        $admin_css_version = filemtime(THEME_ADMIN_BUILD_PATH . $admin_css);
+        $admin_js_version  = filemtime(THEME_ADMIN_BUILD_PATH . $admin_js);
 
-        wp_enqueue_style( 'monotone-admin', THEME_ADMIN_BUILD_URI . $admin_css, [], $admin_css_version );
-        wp_enqueue_script( 'monotone-admin', THEME_ADMIN_BUILD_URI . $admin_js, [ 'jquery' ], $admin_js_version, true );
+        wp_enqueue_style('monotone-admin', THEME_ADMIN_BUILD_URI . $admin_css, [], $admin_css_version);
+        wp_enqueue_script('monotone-admin', THEME_ADMIN_BUILD_URI . $admin_js, ['jquery'], $admin_js_version, true);
+
+        // Data for ACF flex layout helpers moved out of admin_head inline scripts.
+        wp_localize_script(
+            'monotone-admin',
+            'monotoneFlexAdmin',
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce('layout_thumbnail'),
+                'action'  => 'get_layout_thumbnail',
+            ]
+        );
     }
-
 }
 
 new Assets();

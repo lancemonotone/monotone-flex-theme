@@ -9,6 +9,6 @@
 
 <?php get_header(); ?>
 
-<?php ACF_Flex_Page::get_layout('template_flex_page', 'page-' . get_the_ID()); ?>
+<?php ACF_Flex_Page::get_layout( get_the_ID() ); ?>
 
 <?php get_footer(); ?>

@@ -15,6 +15,7 @@ layouts/
       |--my_layout.php
       |--my_layout.js
       |--my_layout.scss (optional)
+      |--thumb.png (or .jpg / .webp; optional but recommended)
 assets/
    |--src/
       |--index.js (you shouldn't have to touch this file)
@@ -25,6 +26,8 @@ Each layout consists of
 - A JavaScript file for layout-specific functionality and optionally importing custom styles
 - An optional SCSS file for custom styles, if needed.
   - Bootstrap is available in this theme, so you can instead use its utility classes directly in your markup.
+- An optional preview thumbnail named `thumb.png`, `thumb.jpg`, or `thumb.webp` in the layout folder.
+  - Shown on the layout row handle in the editor and as a hover preview in the ACF "Add layout" popup.
 
 ## Step 1: Create Your Layout Module Markup
 
@@ -86,6 +89,11 @@ Each layout consists of
       background-color: #f8f9fa;
   }
 ```
+
+5. **Add Preview Thumbnail (Optional but recommended)**: Place a screenshot of the rendered layout in the layout directory as `thumb.png`, `thumb.jpg`, or `thumb.webp` (exact filename; no layout-name prefix).
+   - Example path: `layouts/my_layout/thumb.png`
+   - Theme looks for those three extensions in that order (`jpg`, then `png`, then `webp`).
+   - Without a thumb file, the editor still works; the row handle and Add-layout popup just skip the image preview.
 
 ## Step 2: Register Your Layout Module with the Theme
 

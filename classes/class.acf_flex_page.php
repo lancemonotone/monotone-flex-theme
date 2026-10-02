@@ -1,154 +1,271 @@
-<?php namespace monotone;
+<?php
 
+namespace monotone;
+
+/**
+ * ACF Flex Page builder lets editors build a page from stacked modules. Each
+ * module is an ACF Flexible Content 'layout' (hero, divider, etc.) with its
+ * own fields and styles.
+ *
+ * Why it exists (and why you shouldn't use it):
+ *     Although Gutenberg blocks were a great idea in concept, early block
+ *     editing was brutal. Gutenberg expected us to speak React, which had
+ *     not yet gone viral, and developer documentation was confusing and
+ *     inconsistent. This Flex Page builder attempted to provide editors a 
+ *     modular 'block' solution authored in the familiar WordPress way, with
+ *     its own fields, template, assets, and a thumbnail UI preview. However,
+ *     an improved Block API and the advent of ACF Blocks (which I now prefer)
+ *     have improved the block experience tremendously, making this approach
+ *     obsolete.
+ *
+ *     I have since developed a standalone plugin for defining and managing
+ *     multiple ACF Block modules within a shared architecture, featuring
+ *     automatic block and field registration, asset handling, and editor
+ *     templates per block. It's similar in concept to this Flex Page
+ *     builder, but instead of embedding Flex Content field definitions
+ *     directly into the theme, defined ACF Block modules can be reused
+ *     across any site with a block-enabled theme. ACF Blocks are authored in
+ *     a more familiar way than native WP Blocks, are more performant than
+ *     Flexible Content fields, and don't require anything special from themes.
+ *
+ * Layouts:
+ *     Each Flex Page layout module is a self-contained directory in
+ *     `{theme}/layouts/{slug}/{slug}.php`. This directory contains the
+ *     layout PHP template, a thumbnail image of the rendered UI for a
+ *     popover preview, and optional SCSS and JS files. Each layout's JS
+ *     (and any SCSS it imports) is wired through `layouts/layouts.js`
+ *     into the Vite frontend build. When building a flex page, editors
+ *     choose layouts from predefined Flex Content modules, each with its
+ *     own fields and styles. Building a flex page is fast, flexible, and
+ *     difficult to wreck, making it a great solution for non-technical
+ *     site owners to add variety while maintaining consistency across a
+ *     site.
+ *
+ * ACF setup:
+ *     Screenshot: `layouts/acf_flexible_content_field_example.png`
+ *
+ *     The field group 'Flex Layouts' has one Flexible Content field
+ *     labeled 'Flex Modules'. Its field name must be
+ *     'template_flex_page' (`THEME_LAYOUT_SLUG`). Layouts inside that
+ *     field are the modules (e.g. full_width_section, divider) available
+ *     in the editor, each with its own sub-fields and supported by layout
+ *     templates (containing php, css, js, and a thumbnail image) defined
+ *     in `layouts/{slug}/{slug}.php`.
+ *
+ * Usage:
+ *     This class renders ACF Flexible Content layouts on page templates
+ *     which call:
+ *
+ *     `<?php ACF_Flex_Page::get_layout( get_the_ID() ); ?>`
+ *
+ *     `get_layout()` loops through the flexible content field (`THEME_LAYOUT_SLUG`)
+ *     and loads each layout module from `layouts/{slug}/{slug}.php`.
+ *
+ * Admin assets:
+ *     Admin editor UX lives in:
+ *
+ *     `assets/src/components/admin/acf-flex-layouts.js`
+ *     `assets/src/components/admin/_acf-flex-layouts.scss`
+ *
+ * Collapse all:
+ *     Adds a 'Collapse All' control on flexible content labels/actions
+ *     so editors can collapse every layout row at once. ACF now provides
+ *     this functionality natively. I like to think I was the inspiration :P
+ * 
+ * Layout Title Colors:
+ *     Adds a colored background to the layout title in the admin editor, based 
+ *     on the layout type name. Colors are the same for each layout type, so 
+ *     editors can easily identify different layouts at a glance.
+ * 
+ * Layout Thumbnails:
+ *     Enhances the layout selection tooltips in the WordPress admin by adding 
+ *     thumbnail previews. Thumbnail images are appended to each layout choice 
+ *     in the ACF Flexible Content 'Add' popup. Thumbnails appear on hover, 
+ *     providing a visual preview of the rendered layout.
+ */
 class ACF_Flex_Page {
-    public static string $template_path = 'layouts/';
+    // ACF flexible content field name (from `THEME_LAYOUT_SLUG`).
+    public static string $layout_slug = '';
+
+    // Relative layouts dir for get_template_part (from `THEME_LAYOUT_DIR`).
+    public static string $layout_dir = '';
+
+    // Preferred admin handle label field (from `THEME_LAYOUT_TITLE_FIELD`).
+    public static string $layout_title_field = '';
+
+    // Alternate title field slugs for the admin handle (from `THEME_LAYOUT_TITLE_FIELDS`).
+    public static array $layout_title_fields = [];
 
     public function __construct() {
-        add_action( 'admin_head', [ $this, 'collapse_layout_fields' ] );
-        add_action( 'admin_head', [ $this, 'add_background_color_to_layouts_handles' ] );
-        add_action( 'admin_head', [ $this, 'add_thumbnail_to_layout_choices' ] );
-        add_filter( 'acf/fields/flexible_content/layout_title', [ $this, 'add_layout_title' ], 10, 4 );
+        add_action('after_setup_theme', [$this, 'init'], 1);
+
+        add_filter('acf/fields/flexible_content/layout_title', [$this, 'add_layout_title'], 10, 4);
 
         // Add AJAX actions for getting layout thumbnails
-        add_action( 'wp_ajax_get_layout_thumbnail', [ $this, 'ajax_get_layout_thumbnail' ] );
-        add_action( 'wp_ajax_nopriv_get_layout_thumbnail', [ $this, 'ajax_get_layout_thumbnail' ] );
+        add_action('wp_ajax_get_layout_thumbnail', [$this, 'ajax_get_layout_thumbnail']);
     }
 
     /**
-     * Retrieve layout parts and display them.
+     * Copy layout config from theme constants onto this class.
+     */
+    public function init(): void {
+        self::$layout_slug = THEME_LAYOUT_SLUG;
+        self::$layout_dir = THEME_LAYOUT_DIR;
+        self::$layout_title_field = THEME_LAYOUT_TITLE_FIELD;
+        self::$layout_title_fields = THEME_LAYOUT_TITLE_FIELDS;
+    }
+
+    /**
+     * Walk the page's flex field and print (or return) each layout module.
      *
-     * @param string $layout - The layout to retrieve.
-     * @param string $parent - The parent to retrieve from.
-     * @param bool $return - Whether to return the content or echo it.
+     * Field name comes from self::$layout_slug. Layout IDs get a page-{id} prefix
+     * so two pages don't collide if the same layout shows up twice.
+     *
+     * @param int  $page_id Page that holds the flexible content rows.
+     * @param bool $return  True to return markup; false to echo it.
      *
      * @return string|void
      */
-    public static function get_layout( string $layout, string $parent, bool $return = false ) {
-        $count = 1;
-        while ( have_rows( $layout ) ) {
-            the_row();
-            $row_layout            = get_row_layout();
-            $layout_settings       = ACF_Flex_Page::get_layout_settings( $row_layout, $parent, $count++ );
-            $template_part_content = self::get_layout_template( $row_layout, $layout_settings );
+    public static function get_layout(int $page_id, bool $return = false) {
+        $page_id_prefix = 'page-' . $page_id;
 
-            if ( $return && $template_part_content ) {
-                return $template_part_content;
+        // Which row we're on. Used for default layout ids when 'layout_id' isn't set
+        // so two of the same layout don't get the same id.
+        $count  = 1;
+        // Populated when $return is true; ignored when echoing.
+        $output = '';
+
+        // Loop through every layout in this flexible content field.
+        while (have_rows(self::$layout_slug, $page_id)) {
+            the_row();
+
+            // Get row layout, build its settings, load its template.
+            $layout = get_row_layout();
+            $layout_settings = self::get_layout_settings($layout, $page_id_prefix, $count++);
+            $layout_content = self::get_layout_content($layout, $layout_settings);
+
+            // No template (or empty) for this layout name? Skip to the next.
+            if ($layout_content === null) {
+                continue;
             }
 
-            echo $template_part_content;
+            // Either return the markup or echo it now.
+            if ($return) {
+                $output .= $layout_content;
+            } else {
+                echo $layout_content;
+            }
         }
 
-        if ( $return ) {
-            return;
+        // Return the markup if $return is true, otherwise echo it.
+        if ($return) {
+            return $output;
         }
     }
 
     /**
-     * Retrieve and display a template part.
+     * Load a layout's PHP template and return its markup.
      *
-     * @param string $slug - The template part slug.
-     * @param array $args - The arguments to pass to the template.
+     * @param string $slug Layout name/folder.
+     * @param array  $args Passed through to `get_template_part()`.
      *
-     * @return string|null
+     * @return string|null Markup, or null when the template is missing/empty.
      */
-    public static function get_layout_template( string $slug, array $args = [] ): ?string {
-        $template_path = self::$template_path . '/' . $slug . '/' . $slug;
+    public static function get_layout_content(string $slug, array $args = []): ?string {
+        $template_path = self::$layout_dir . '/' . $slug . '/' . $slug;
         ob_start();
-        get_template_part( $template_path, null, $args );
+        get_template_part($template_path, null, $args);
         $content = ob_get_clean();
 
-        return ( $content === '' ) ? null : $content;
+        return ($content === '') ? null : $content;
     }
 
     /**
-     * Get the layout settings for a given module.
-     * This is used to set the module ID, classes, and styles.
+     * Return layout settings (ID, classes, and inline styles).
      *
-     * @param $row_layout
-     * @param $parent
-     * @param int $count
+     * @param string $row_layout      ACF layout name.
+     * @param string $page_id_prefix  Prefix for default layout IDs (e.g. page-123).
+     * @param int    $count           Row index among siblings.
      *
      * @return array
      */
-    public static function get_layout_settings( $row_layout, $parent, int $count ): array {
+    public static function get_layout_settings(string $row_layout, string $page_id_prefix, int $count): array {
         // convert _ to -
-        $layout    = str_replace( '_', '-', $row_layout );
-        $module_id = get_sub_field( 'module_id' ) ?: $parent . '-' . $layout . '-' . $count;
+        $layout    = str_replace('_', '-', $row_layout);
 
-        $classes = [ 'layout', $layout ];
+        // If a layout_id field exists and is set, use it, otherwise use 'page-123-layout-name-1'.
+        $layout_id = get_sub_field('layout_id') ?: $page_id_prefix . '-' . $layout . '-' . $count;
+
+        $classes = ['layout', $layout];
         $styles  = [];
 
-        if ( get_sub_field( 'no_bottom_padding' ) ) {
-            $classes [] = 'no-padding-bottom';
+        // NO BOTTOM PADDING
+        if (get_sub_field('no_bottom_padding')) {
+            $classes[] = 'no-padding-bottom';
         }
 
-        if ( get_sub_field( 'no_top_padding' ) ) {
-            $classes [] = 'no-padding-top';
+        // NO TOP PADDING
+        if (get_sub_field('no_top_padding')) {
+            $classes[] = 'no-padding-top';
         }
 
-        if ( get_sub_field( 'add_top_padding' ) ) {
-            $classes [] = 'add-padding-top';
+        // ADD TOP PADDING
+        if (get_sub_field('add_top_padding')) {
+            $classes[] = 'add-padding-top';
         }
 
-        /**
-         * BACKGROUND COLOR
-         */
-        if ( get_sub_field( 'background_color' ) ) {
-            $classes [] = get_sub_field( 'background_color' );
+        // BACKGROUND COLOR
+        if (get_sub_field('background_color')) {
+            $classes[] = get_sub_field('background_color');
         }
 
-        /**
-         * HIDE PAGE TITLE
-         */
-        if ( get_sub_field( 'hide_page_title' ) ) {
-            $classes [] = 'hide-page-title';
+        // HIDE PAGE TITLE
+        if (get_sub_field('hide_page_title')) {
+            $classes[] = 'hide-page-title';
         }
 
-        /**
-         * SPLIT IMAGE
-         */
-        if ( $split_type = get_sub_field( 'split_type' ) ) {
-            $classes [] = $split_type;
+        // SPLIT IMAGE
+        if ($split_type = get_sub_field('split_type')) {
+            $classes[] = $split_type;
         }
 
-        /**
-         * BACKGROUND IMAGE
-         */
-        if ( get_sub_field( 'background_image' ) ) {
-            $classes [] = 'has-background-img lazy-bg';
-            $styles []  = self::get_background_image_style( get_sub_field( 'background_image' ) );
+        // BACKGROUND IMAGE
+        if (get_sub_field('background_image')) {
+            $classes[] = 'has-background-img lazy-bg';
+            $styles[]  = self::get_background_image_style(get_sub_field('background_image'));
         }
 
-        $classes = implode( ' ', $classes );
-        $styles  = implode( ' ', $styles );
+        $classes = implode(' ', $classes);
+        $styles  = implode(' ', $styles);
 
         return [
-            'id'      => $module_id,
+            'id'      => $layout_id,
             'classes' => $classes,
             'styles'  => $styles
         ];
     }
 
     /**
-     * Get the background image style for a given element.
-     * If the image is an array, it will use the 2048x2048 size.
+     * Build an inline background-image style string for a layout module.
      *
-     * If $url_only is true, it will only return the url of the image.
+     * Uses the attachment's full-size URL via `Images::get_image_url()`.
+     * When `$bg_image_only` is true, returns only the background-image property;
+     * otherwise also adds cover/center/no-repeat properties.
      *
-     * @param $image
-     * @param bool $url_only
+     * @param mixed $image         Image attachment ID.
+     * @param bool  $bg_image_only Skip the cover/center/no-repeat properties.
      *
      * @return string
      */
-    public static function get_background_image_style( $image, bool $url_only = false ): string {
-        $url = Images::get_image_url( [
+    public static function get_background_image_style(int $image, bool $bg_image_only = false): string {
+        $url = Images::get_image_url([
             'id'   => $image,
             'size' => 'full'
-        ] );
+        ]);
 
         $style = 'background-image: url(' . $url . ');';
 
-        if ( $url_only ) {
+        if ($bg_image_only) {
             return $style;
         }
 
@@ -158,401 +275,173 @@ class ACF_Flex_Page {
     }
 
     /**
-     * Checks if the current page uses a template
-     * defined in the $templates array.
+     * Customize layout titles in the editor.
      *
-     * @return bool
+     * By default, collapsed layout labels show the layout type, which is not helpful for
+     * distinguishing between layouts (e.g. five 'Full Width Section' layouts). This method
+     * builds the title HTML so editors can tell layouts apart by their text label, a layout
+     * thumbnail, and a colored background. ACF injects the returned HTML label into the
+     * row header. Title styles live in `_acf-flex-layouts.scss`.
+     * 
+     * @callback acf/fields/flexible_content/layout_title
+     *
+     * @param string $title  Layout type label from ACF (e.g. 'Full Width Section').
+     * @param array  $field  The ACF field definition (unused)
+     * @param array  $layout Layout definition, including sub_fields.
+     * @param int    $i      The index of the layout in the flexible content field (unused).
+     *
+     * @return string HTML for the flex row title in wp-admin.
      */
-    public static function has_template(): bool {
-        foreach ( self::$templates as $template ) {
-            if ( have_rows( $template ) ) {
-                return true;
+    public function add_layout_title(string $title, array $field, array $layout, int $i): string {
+        // Apply any shortcodes to the $title string.
+        $title = do_shortcode($title);
+
+        // Only use fields that actually exist on this layout.
+        $found = [];
+        $sub_fields = $layout['sub_fields'] ?? [];
+        foreach ($sub_fields as $sub) {
+            if (! empty($sub['name'])) {
+                $found[$sub['name']] = true;
             }
         }
 
-        return false;
-    }
+        // Title field names to check for a value (preferred title field first).
+        $title_fields = [];
 
-    /**
-     * Friendly Block Titles - combine nice name and module name
-     *
-     * @param $title
-     * @param $field
-     * @param $layout
-     * @param $i
-     *
-     * @return string
-     */
-    public function add_layout_title( $title, $field, $layout, $i ): string {
-        // Apply any shortcodes to the $title string.
-        $title      = do_shortcode( $title );
-        $title_html = '';
+        // Prefer $layout_title_field when this layout has that field.
+        if (isset($found[self::$layout_title_field])) {
+            $title_fields[] = self::$layout_title_field;
+        }
 
-        // Initialize an array containing possible field names.
-        $possible_fields = [
-            'page_title',
-            'layout_title',
-            'heading',
-            'section_heading',
-            'left_heading',
-            'divider_label',
-            'accordion_label',
-            'event_title',
-            'spacer_height',
-            'kicker',
-            'content'
-        ];
+        // Then any other title fields that exist on this layout.
+        foreach (self::$layout_title_fields as $field_name) {
+            if (isset($found[$field_name])) {
+                $title_fields[] = $field_name;
+            }
+        }
 
-        // Get the color code of $title by calling the get_color() method of the class.
-        $color = $this->get_color( $title );
-        // Append thumbnail to the title_html
-        $title_html .= $this->add_layout_thumbnail( $layout );
-        // Create an HTML string for the title with a colored background using $color.
-        $title_html .= '<span class="acf-layout-type" style="background: #' . $color . '">' . $title . '</span>';
+        // Colors are the same for each layout type, so cache calculation across calls.
+        static $color_cache = [];
+        if (! isset($color_cache[$title])) {
+            // Generate a color from the title.
+            $color_cache[$title] = Color_Helpers::hex_from_string($title);
+        }
+        $color = $color_cache[$title];
 
-        // Loop through each possible field name to check if a value exists for that field using the get_sub_field() function.
-        foreach ( $possible_fields as $field_name ) {
-            if ( $value = get_sub_field( $field_name ) ) {
-                // If a value is found for a field, apply any shortcodes to the value and append the result to the $title_html string.
-                $value      = do_shortcode( strip_tags( $value ) );
-                $title_html .= '<span class="acf-layout-title">' . ucwords( $value ) . '</span>';
+        // Add the layout thumbnail.
+        $title_html  = $this->add_layout_thumbnail($layout);
 
-                // Return the $title_html string.
+        // Add the layout type color background.
+        $type_label = esc_html($title);
+        $title_html .= <<<HTML
+<span class="acf-layout-type" style="background: #{$color}">{$type_label}</span>
+HTML;
+
+        // Find first field with a value. Append its text as the label, then return the full title HTML.
+        foreach ($title_fields as $field_name) {
+            if ($value = get_sub_field($field_name)) {
+                $value = strip_tags($value);
+                $value = do_shortcode($value);
+                $value = ucwords($value);
+                $value = esc_html($value);
+                $title_html .= <<<HTML
+<span class="acf-layout-title">{$value}</span>
+HTML;
                 return $title_html;
             }
         }
 
-        // Loop through each sub-field in the current layout to check if a value exists for the 'layout_title' field.
-        foreach ( $layout[ 'sub_fields' ] as $sub ) {
-            if ( $sub[ 'name' ] == 'layout_title' ) {
-                $key = $sub[ 'key' ];
-                if ( ! empty( $field[ 'value' ][ $i ][ $key ] ) ) {
-                    // If a value exists for the 'layout_title' field, return the $title_html string.
-                    return $title_html;
-                }
-            }
-        }
-
-        // If no values are found for any of the fields, return the $title_html string.
+        // No label found; return thumb and name only.
         return $title_html;
     }
 
-    public function add_background_color_to_layouts_handles(): void {
-        ?>
-        <script type="text/javascript">
-            document.addEventListener('DOMContentLoaded', function () {
-                const handles = document.querySelectorAll('.acf-fc-layout-handle')
-                // look for the style tag on the .acf-layout-type child and apply it to the parent
-                handles.forEach(function (handle) {
-                    const layoutType = handle.querySelector('.acf-layout-type')
-                    if (layoutType) {
-                        const style = layoutType.getAttribute('style')
-                        if (style) {
-                            handle.setAttribute('style', style)
-                        }
-                    }
-                })
-            })
-        </script>
-        <?php
-    }
-
-
     /**
-     * Collapse all flexible content fields
+     * Returns layout thumbnail HTML.
      *
-     * @return void
+     * If no thumbnail exists, returns an empty .thumbnail.no-thumbnail span so
+     * spacing stays consistent. Styles in `_acf-flex-layouts.scss` handle both cases.
+     *
+     * @param array $layout Layout definition from ACF (needs name / slug).
+     *
+     * @return string Thumbnail markup for the row title.
      */
-    public function collapse_layout_fields() {
-        ?>
-        <style>
-            .acf-label:has([data-collapse="all"]) {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-        </style>
+    public function add_layout_thumbnail(array $layout): string {
+        $slug = $layout['name'];
 
-        <script type="text/javascript">
-            document.addEventListener('DOMContentLoaded', function () {
-                const classes = 'acf-button button button-primary'
-                const button = '<a class="' + classes + '" data-collapse="all">Collapse All</a>'
+        if ($thumbnail_url = $this->get_layout_thumbnail($slug)) {
+            $src = esc_url($thumbnail_url);
 
-                // Add a clickable link to the label line of flexible content fields
-                let flexibleContentFields = document.querySelectorAll('.acf-field-flexible-content')
-                for (let i = 0; i < flexibleContentFields.length; i++) {
-                    let label = flexibleContentFields[i].querySelector('.acf-label')
-                    label.innerHTML += button
-                }
-
-                // Add a clickable link to the last acf-actions on the page
-                let acfActions = document.querySelectorAll('.acf-flexible-content .acf-actions')
-                let lastAcfActions = acfActions[acfActions.length - 1]
-                if (lastAcfActions) {
-                    lastAcfActions.innerHTML += button
-                }
-
-                // Simulate a click on each flexible content item's "collapse" button when clicking the new link
-                let collapseButtons = document.querySelectorAll('[data-collapse="all"]')
-                for (let i = 0; i < collapseButtons.length; i++) {
-                    collapseButtons[i].addEventListener('click', function () {
-                        let flexibleContent = this.closest('.acf-field-flexible-content').
-                            querySelector('.acf-flexible-content')
-                        let layoutItems = flexibleContent.querySelectorAll('.layout')
-                        for (let j = 0; j < layoutItems.length; j++) {
-                            layoutItems[j].classList.add('-collapsed')
-                        }
-                    })
-                }
-            })
-        </script>
-        <?php
-    }
-
-    /**
-     * Adds a thumbnail image to the title of a Flexible Content layout in the Advanced Custom Fields (ACF) plugin.
-     *
-     * @param array $layout The layout array containing all settings. Not used in this method but required by the filter.
-     *
-     * @return string The thumbnail image if it exists in the specified directory.
-     */
-    public function add_layout_thumbnail( array $layout ): string {
-        // Get the slug of the field
-        $field_name = $layout[ 'name' ];
-
-        if ( $thumbnail_url = $this->get_layout_thumbnail( $field_name ) ) {
-            return '<span class="thumbnail"><img src="' . esc_url( $thumbnail_url ) . '" height="36px" alt="" /></span>';
-        } else {
-            return '<span class="thumbnail no-thumbnail"></span>';
+            return <<<HTML
+<span class="thumbnail"><img src="{$src}" height="36px" alt="" /></span>
+HTML;
         }
+
+        return <<<HTML
+<span class="thumbnail no-thumbnail"></span>
+HTML;
     }
 
     /**
-     * Enhances the layout selection tooltips in the WordPress admin by adding thumbnail previews.
-     * This function injects custom styles and a script into the admin page that append thumbnail images
-     * to each layout choice in the ACF Flexible Content Add Field buttons.
-     * Thumbnails appear on hover, providing a visual preview of the layout options to the user.
-     * The script checks if the thumbnails exist before showing them, and can handle non-existent images gracefully.
-     * It uses promises to manage the loading of images asynchronously, ensuring that all thumbnails are loaded
-     * before they are displayed. The path to the thumbnails is constructed using the layout name and is based
-     * on a conventional directory structure within the theme.
-     */
-    public function add_thumbnail_to_layout_choices(): void {
-        $theme_uri = get_template_directory_uri();
-        ?>
-        <style>
-            .acf-tooltip.acf-fc-popup li a {
-                position: relative;
-            }
-
-            .acf-tooltip.acf-fc-popup li a img {
-                position: absolute;
-                top: 0;
-                right: 100%;
-                transform: translateX(-1rem);
-                opacity: 0;
-                transition: opacity 0.2s ease-in-out;
-                width: auto;
-                max-width: 320px;
-                padding: 0.5rem;
-                background: #d5d5d5;
-                box-shadow: 0 0 2px #00000088;
-                border-radius: 1%;
-            }
-
-            .acf-tooltip.acf-fc-popup li a:hover img {
-                opacity: 1;
-            }
-        </style>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const templates = document.querySelectorAll('.tmpl-popup')
-
-                templates.forEach(function (template) {
-                    const templateContent = template.innerHTML.trim()
-                    const container = document.createElement('div')
-                    container.innerHTML = templateContent
-
-                    const links = container.querySelectorAll('a[data-layout]')
-                    const ajaxPromises = [] // Array to hold all AJAX promises
-
-                    links.forEach(function (link) {
-                        const layout = link.getAttribute('data-layout')
-
-                        // Prepare the data to be sent in the AJAX request
-                        const data = new FormData()
-                        data.append('action', 'get_layout_thumbnail')
-                        data.append('layout', layout)
-
-                        // Create a promise for the AJAX request
-                        const ajaxPromise = fetch(ajaxurl, {
-                            method     : 'POST',
-                            credentials: 'same-origin',
-                            body       : data,
-                        }).then(response => response.text()).then(thumbnailUri => {
-                            if (thumbnailUri) {
-                                const img = document.createElement('img')
-                                img.src = thumbnailUri
-                                img.classList.add('image-hidden')
-                                link.prepend(img)
-                            }
-                        }).catch(error => console.error('Error:', error))
-
-                        // Add the AJAX promise to the array
-                        ajaxPromises.push(ajaxPromise)
-                    })
-
-                    // Wait for all AJAX promises to resolve
-                    Promise.all(ajaxPromises).then(function () {
-                        // Once all images have been handled, update the template's content
-                        template.innerHTML = container.innerHTML.trim()
-                    })
-                })
-            })
-        </script>
-
-        <?php
-    }
-
-    /**
-     * AJAX callback function to get the thumbnail URL for a layout.
+     * AJAX request handler for layout thumbnails in the ACF 'Add layout' popup.
+     *
+     * When the editor opens the layout picker, `acf-flex-layouts.js` requests 
+     * layout thumbnails. Request should contain a nonce named 'layout_thumbnail'
+     * and the layout slug. Echoes the thumbnail URL if found.
      *
      * @return void
      */
-    function ajax_get_layout_thumbnail(): void {
-        // Check for the 'layout' parameter
-        if ( isset( $_POST[ 'layout' ] ) ) {
-            $layout        = sanitize_text_field( $_POST[ 'layout' ] );
-            $thumbnail_url = $this->get_layout_thumbnail( $layout );
-            echo $thumbnail_url;
-        } else {
+    public function ajax_get_layout_thumbnail(): void {
+        check_ajax_referer('layout_thumbnail', 'nonce');
+
+        $slug = sanitize_text_field(wp_unslash($_POST['layout'] ?? ''));
+        if ($slug === '') {
             echo '';
+            wp_die();
         }
-        wp_die(); // Terminate the script properly
+
+        echo $this->get_layout_thumbnail($slug);
+        wp_die();
     }
 
     /**
-     * Get existing image for a layout, checking for jpg, png, and webp formats.
+     * Find the preview image for a layout and return its URL.
      *
-     * @param $layout
+     * Checks `THEME_LAYOUT_PATH/{slug}/` for the layout preview image and returns 
+     * its URL. Returns an empty string if not found. Caches each slug request
+     * because layouts are reused.
      *
-     * @return string
+     * @param string $slug Layout folder name (e.g. full_width_section).
+     *
+     * @return string Thumb URL, or empty string if missing.
      */
-    function get_layout_thumbnail( $layout ): string {
-        $file_types = [ 'jpg', 'png', 'webp' ];
-        foreach ( $file_types as $type ) {
-            $filePath = THEME_LAYOUT_PATH . "/{$layout}/thumb.{$type}";
-            if ( file_exists( $filePath ) ) {
-                return THEME_LAYOUT_URI . "/{$layout}/thumb.{$type}";
+    public function get_layout_thumbnail(string $slug): string {
+        // Keep path bits out of the slug; AJAX can send anything.
+        $slug = basename($slug);
+        if ($slug === '' || $slug === '.' || $slug === '..') {
+            return '';
+        }
+
+        // Same layout name? Cache the results.
+        static $thumb_cache = [];
+
+        // Return cached result if available.
+        if (array_key_exists($slug, $thumb_cache)) {
+            return $thumb_cache[$slug];
+        }
+
+        $file_types = ['jpg', 'png', 'webp'];
+        foreach ($file_types as $type) {
+            $file_path = THEME_LAYOUT_PATH . "/{$slug}/thumb.{$type}";
+            if (file_exists($file_path)) {
+                // Cache and return the result.
+                return $thumb_cache[$slug] = THEME_LAYOUT_URI . "/{$slug}/thumb.{$type}";
             }
         }
 
-        return "";
-    }
-
-    /**
-     * Get color code for a string. This is randomly generated based on the title.
-     *
-     * @param $title
-     *
-     * @return string
-     */
-    private function get_color( $title ): string {
-        // Generate a 6 character color code from the md5 hash of the title
-        $color = substr( sha1( $title ), 0, 6 );
-
-        // Convert the color from RGB to HSL
-        // Extract the red, green, and blue components from the color code
-        $R = hexdec( substr( $color, 0, 2 ) ) / 255;
-        $G = hexdec( substr( $color, 2, 2 ) ) / 255;
-        $B = hexdec( substr( $color, 4, 2 ) ) / 255;
-
-        // Calculate the maximum and minimum values among R, G, and B
-        $max = max( $R, $G, $B );
-        $min = min( $R, $G, $B );
-
-        // Calculate the lightness value
-        $L = ( $max + $min ) / 3;
-        // If lightness is less than 25%, add 50% to the lightness value
-        $L = $L < 0.25 ? $L + 0.25 : $L;
-
-        // Calculate the saturation value
-        if ( $max == $min ) {
-            $S = 0;
-        } else {
-            if ( $L < 0.5 ) {
-                $S = ( $max - $min ) / ( $max + $min );
-            } else {
-                $S = ( $max - $min ) / ( 2.0 - $max - $min );
-            }
-        }
-
-        // Reduce the saturation of the color by 50%
-        $S *= 0.3;
-
-        // If saturation is 0, set R, G, and B to the lightness value
-        if ( $S == 0 ) {
-            $R = $G = $B = $L;
-        } else {
-            // If saturation is not 0, adjust R, G, and B based on lightness and saturation
-            if ( $L < 0.5 ) {
-                $temp2 = $L * ( 1.0 + $S );
-            } else {
-                $temp2 = ( $L + $S ) - ( $S * $L );
-            }
-            $temp1 = 2.0 * $L - $temp2;
-
-            // Calculate the hue angle
-            $hue_angle = atan2( 2 * ( $R - $G ), ( $B - $R - $G ) ) / ( 2 * pi() );
-            if ( $hue_angle < 0 ) {
-                $hue_angle += 1;
-            }
-
-            // Convert the hue angle to a value between 0 and 1
-            $H = $hue_angle < 0 ? $hue_angle + 1 : $hue_angle;
-
-            // Convert the hue, saturation, and lightness values back to RGB
-            $R = $this->hue_to_rgb( $temp1, $temp2, $H + 1.0 / 3.0 ) * 255;
-            $G = $this->hue_to_rgb( $temp1, $temp2, $H ) * 255;
-            $B = $this->hue_to_rgb( $temp1, $temp2, $H - 1.0 / 3.0 ) * 255;
-        }
-
-        // Convert the RGB components back to a hex color code
-        return sprintf( "%02x%02x%02x", $R, $G, $B );
-    }
-
-    /**
-     * Helper function to convert HSL values to RGB
-     *
-     * @param $temp1
-     * @param $temp2
-     * @param $temp3
-     *
-     * @return float|int
-     */
-    private function hue_to_rgb( $temp1, $temp2, $temp3 ): float|int {
-        if ( $temp3 < 0 ) {
-            $temp3 += 1.0;
-        }
-        if ( $temp3 > 1 ) {
-            $temp3 -= 1.0;
-        }
-
-        if ( $temp3 < 1.0 / 6.0 ) {
-            return $temp1 + ( $temp2 - $temp1 ) * 6.0 * $temp3;
-        }
-        if ( $temp3 < 1.0 / 2.0 ) {
-            return $temp2;
-        }
-        if ( $temp3 < 2.0 / 3.0 ) {
-            return $temp1 + ( $temp2 - $temp1 ) * ( 2.0 / 3.0 - $temp3 ) * 6.0;
-        }
-
-        return $temp1;
+        return $thumb_cache[$slug] = '';
     }
 }
 
-if ( class_exists( 'ACF' ) ) {
+if (class_exists('ACF')) {
     new ACF_Flex_Page();
 }
